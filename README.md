@@ -11,6 +11,7 @@ ScriptHookDotNet 1.7.1.9 could load a script from its source file: drop `MyMod.c
 ## Contents
 
 - [Requirements](#requirements)
+- [Downloads](#downloads)
 - [Install](#install)
 - [Using it](#using-it)
 - [Which files get compiled](#which-files-get-compiled)
@@ -31,23 +32,40 @@ ScriptHookDotNet 1.7.1.9 could load a script from its source file: drop `MyMod.c
 - GTA IV or EFLC with **IV-SDK .NET 1.9.x** installed and its **ScriptHookDotNet support** enabled. `IVSDKDotNet\bin\ScriptHookDotNet.dll` must be there.
 - **Windows with .NET Framework 4.x.** Every supported Windows version already has it. The build uses the C# compiler that ships with it (`%WINDIR%\Microsoft.NET\Framework\v4.0.30319\csc.exe`), so you don't need Visual Studio.
 
+## Downloads
+
+| File | What it is |
+|---|---|
+| [`IVSDKScriptCompiler_0.3.zip`](IVSDKScriptCompiler_0.3.zip) | **The mod**, ready to use. Most people want this one. |
+| [`IVSDKScriptCompiler_source_0.3.zip`](IVSDKScriptCompiler_source_0.3.zip) | Source code and `build.bat`, if you'd rather build it yourself. |
+
+SHA-256 of `IVSDKScriptCompiler.ivsdk.dll` in the ready-to-use zip: `53d7ffffcc8104fa65db0ec1d49c7c376fa52433d9918d4dc65630bd685e1583`
+
 ## Install
 
-The repository holds source code only. You build the one file yourself, which takes a few seconds:
+### Ready to use
 
-1. Download this repository (green **Code** button, then **Download ZIP**) and unzip it.
-2. Put the `IVSDKScriptCompiler` folder **inside your GTA IV folder**, next to `GTAIV.exe`.
+1. Unzip `IVSDKScriptCompiler_0.3.zip`.
+2. Copy the `IVSDKDotNet` folder from `TheFiles` into your GTA IV folder (the one with `GTAIV.exe`), and let it merge. The mod ends up at `IVSDKDotNet\scripts\IVSDKScriptCompiler.ivsdk.dll`.
+3. Start the game. The F4 console shows `IVSDKScriptCompiler 0.3: looking for source scripts`.
+
+### Build it yourself
+
+Takes a few seconds, and you don't need Visual Studio:
+
+1. Unzip `IVSDKScriptCompiler_source_0.3.zip`.
+2. Put the `IVSDKScriptCompiler_source_0.3` folder **inside your GTA IV folder**, next to `GTAIV.exe`.
 3. Double-click **`build.bat`**. It builds `IVSDKScriptCompiler.ivsdk.dll` against the IV-SDK .NET in *that* game folder, then copies it to `IVSDKDotNet\scripts\`. When it's done it shows:
    ```
    Built and installed: ...\IVSDKDotNet\scripts\IVSDKScriptCompiler.ivsdk.dll
    ```
 4. Start the game.
 
-Building it yourself means the tool always matches your IV-SDK .NET install, and you can read every line of what you're running.
+Building it yourself means the tool matches your IV-SDK .NET install exactly, and you can read every line of what you're running.
 
 ### Quick test
 
-Copy `examples\HelloSource.net.cs` into the game's **`scripts`** folder and start the game. A few seconds after you're in control, this shows on screen:
+`HelloSource.net.cs` is a tiny test script: in the ready-to-use zip it's in `TheTestScript\scripts\`, in the source zip in `examples\`. Copy it into the game's main **`scripts`** folder and start the game. A few seconds after you're in control, this shows on screen:
 
 ```
 HelloSource.net.cs: compiled from source and running
@@ -133,7 +151,7 @@ Not loading script 'HelloSource.net.cs' because it is already loaded.
 
 Full disclosure, so you know what to expect and can check it yourself:
 
-- **You build it on your PC from this source.** There is no prebuilt executable, no installer, no packer and no obfuscation.
+- **Nothing hidden.** The ready-to-use dll is built from the source zip here, with the .NET Framework 4 compiler and the included `build.bat`; you can build it yourself and compare. No installer, no packer, no obfuscation.
 - At game start it **runs the C# / VB compiler that ships with Windows** (`csc.exe` / `vbc.exe` from .NET Framework 4). That's how .NET's built-in `CodeDomProvider` works: it starts the compiler as a short-lived child process of the game, writes temporary files to your `%TEMP%` folder, and writes the finished `.compiled.net.dll` next to the source script. This is the same thing ScriptHookDotNet 1.7.1.9 did.
 - It **reads and writes files only** in `scripts\`, `IVSDKDotNet\scripts\` and its own log in `IVSDKDotNet\`.
 - It **updates one list inside IV-SDK .NET**, its list of script files, using .NET reflection (explained [below](#how-it-works)). It doesn't touch the game's memory, other processes or the registry.
@@ -141,7 +159,7 @@ Full disclosure, so you know what to expect and can check it yourself:
 
 Some antivirus programs dislike any program that compiles code at runtime, or a new `.dll` appearing in a game folder. If yours complains:
 
-1. Scan the files yourself. In Windows, right-click the file and choose **Scan with Microsoft Defender**. You can also upload the built `IVSDKScriptCompiler.ivsdk.dll` to [VirusTotal](https://www.virustotal.com).
+1. Scan the files yourself. In Windows, right-click the file and choose **Scan with Microsoft Defender**. You can also upload `IVSDKScriptCompiler.ivsdk.dll` to [VirusTotal](https://www.virustotal.com). The release dll was scanned with Microsoft Defender before upload.
 2. If Defender flags it wrongly, report the false positive to Microsoft at <https://www.microsoft.com/en-us/wdsi/filesubmission>.
 3. Please [open an issue](https://github.com/bassisthip63-ui/IVSDKScriptCompiler/issues) here too, saying which antivirus program, its version and the detection name.
 
@@ -151,7 +169,7 @@ Some antivirus programs dislike any program that compiles code at runtime, or a 
 2. IV-SDK .NET loads scripts from memory, so `Assembly.Location` is empty. The tool finds its own file as `IVSDKDotNet\scripts\IVSDKScriptCompiler.ivsdk.dll` to know when it was itself updated.
 3. **The file list.** IV-SDK .NET doesn't look at the folders when it loads ScriptHookDotNet scripts. It uses a list (`Manager.Managers.FileCacheManager.cachedFiles`) made when the game starts and kept up to date by a background file watcher. A `.dll` written a moment earlier usually isn't on that list yet, so a new script would only load on the *next* start. After compiling or removing anything, IVSDKScriptCompiler refreshes the two entries for `scripts\` and `IVSDKDotNet\scripts\`, the same way IV-SDK .NET's own watcher does. If a future IV-SDK .NET version changes that list, the tool logs it and skips this step, and new scripts just load on the next start.
 
-The whole tool is the one file `IVSDKScriptCompiler.cs`, about 260 lines.
+The whole tool is the one file `IVSDKScriptCompiler.cs` (in the source zip), about 260 lines.
 
 ## Uninstall
 
